@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Optical Lens Order</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f5f7;font-family:Arial,sans-serif;color:#111}
+.wrap{max-width:520px;margin:auto;padding:14px}
+.card{background:#fff;border-radius:18px;padding:18px;box-shadow:0 5px 25px #0001}
+h1{font-size:22px;margin:0 0 4px}.sub{font-size:12px;color:#777;margin-bottom:18px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.full{grid-column:1/-1}
+label{font-size:12px;font-weight:700;display:block;margin:2px 0 5px}
+input,select,textarea{width:100%;padding:12px;border:1px solid #ddd;border-radius:10px;font-size:15px;background:#fff}
+textarea{min-height:70px;resize:vertical}
+.section{margin-top:15px;padding-top:14px;border-top:1px solid #eee}
+.section h2{font-size:14px;margin:0 0 10px}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+button{border:0;border-radius:11px;padding:14px;font-weight:700;font-size:14px;cursor:pointer}
+.primary{background:#111;color:#fff}.green{background:#1f9d55;color:#fff}.light{background:#eee}
+#preview{display:none;margin-top:16px}.previewTitle{font-weight:700;margin-bottom:8px}
+canvas{width:100%;height:auto;border-radius:14px;border:1px solid #d8dce3;background:#fff}
+.note{font-size:11px;color:#777;line-height:1.4;margin-top:9px}
+@media(max-width:380px){.grid{grid-template-columns:1fr}.full{grid-column:auto}.btns{grid-template-columns:1fr}}
+</style>
+<style>
+.power{font-weight:700;font-size:17px;text-align:center}
+.power:focus{border-color:#111;box-shadow:0 0 0 3px #1111;outline:none}
+</style><style>
+#product{font-weight:600}
+#product:focus{border-color:#111;box-shadow:0 0 0 3px #1111;outline:none}
+</style><style>
+#tint:focus{border-color:#111;box-shadow:0 0 0 3px #1111;outline:none}
+</style>
+<style>
+.power-picker-backdrop{
+  position:fixed;inset:0;background:rgba(7,15,30,.52);z-index:9999;
+  display:none;align-items:flex-end;justify-content:center;
+}
+.power-picker{
+  width:min(100%,520px);max-height:82vh;background:#fff;border-radius:24px 24px 0 0;
+  box-shadow:0 -8px 30px rgba(0,0,0,.18);overflow:hidden;
+}
+.pp-head{padding:18px 20px 12px;font-weight:800;font-size:20px;color:#10152f;display:flex;justify-content:space-between;align-items:center}
+.pp-close{border:0;background:none;font-size:28px;color:#10152f;line-height:1}
+.pp-tabs{display:grid;grid-template-columns:1fr 1fr;background:#eef1fb}
+.pp-tab{border:0;padding:14px;font-size:16px;font-weight:700;background:transparent;color:#666b80}
+.pp-tab.active{background:#eef1fb;color:#10152f}
+.pp-grid{display:grid;grid-template-columns:1fr 1fr;max-height:58vh;overflow:auto}
+.pp-col{border-right:1px solid #eee}
+.pp-item{width:100%;padding:14px 10px;border:0;border-bottom:1px solid #eee;background:#fff;font-size:18px;font-weight:700;color:#10152f}
+.pp-item:active{background:#edf3ff}
+.pp-zero{width:100%;padding:14px;border:0;border-bottom:1px solid #eee;background:#fff;font-size:18px;font-weight:700;color:#10152f}
+.power-trigger{cursor:pointer;background:#fff!important}
+.power-trigger::placeholder{color:#777}
+@media(max-width:520px){
+  .power-picker{max-height:88vh}
+  .pp-item,.pp-zero{padding:13px 8px;font-size:17px}
+}
+</style>
+
+
+
+<style>
+.power-trigger{cursor:pointer!important;background:#fff!important}
+.power-trigger:focus{outline:none;border-color:#111;box-shadow:0 0 0 3px rgba(20,30,50,.10)}
+.power-picker-backdrop{position:fixed;inset:0;background:rgba(8,14,28,.48);z-index:999999;display:none;align-items:flex-end;justify-content:center}
+.power-picker{width:100%;max-width:700px;background:#fff;border-radius:26px 26px 0 0;overflow:hidden;box-shadow:0 -8px 30px rgba(0,0,0,.2)}
+.pp-head{height:78px;padding:0 30px;display:flex;align-items:center;justify-content:space-between;font-size:22px;font-weight:800;color:#0d1230}
+.pp-close{border:0;background:transparent;font-size:36px;line-height:1;color:#0d1230;font-weight:700}
+.pp-tabs{display:grid;grid-template-columns:1fr 1fr;background:#eef1fb}
+.pp-tab{border:0;padding:16px 8px;background:#eef1fb;color:#73778a;font-size:17px;font-weight:700}
+.pp-tab.active{background:#e3e8f8;color:#10152f}
+.pp-grid{display:grid;grid-template-columns:1fr 1fr;max-height:70vh;overflow-y:auto}
+.pp-col{border-right:1px solid #eee}
+.pp-item{width:100%;border:0;border-bottom:1px solid #eee;border-right:1px solid #eee;background:#fff;padding:16px 8px;font-size:18px;font-weight:750;color:#0c1230}
+.pp-item:active{background:#eef5ff}
+.pp-positive-title,.pp-negative-title{display:block;text-align:center;padding:12px 4px;background:#f4f5fa;font-size:16px;font-weight:700}
+@media(max-width:520px){
+  .pp-head{height:72px;padding:0 24px;font-size:20px}
+  .pp-grid{max-height:72vh}
+  .pp-item{padding:16px 5px;font-size:18px}
+}
+</style>
+
+<style>
+.pp-zero-row{display:flex;justify-content:center;background:#fff;border-bottom:1px solid #eee}
+.pp-zero-item{width:50%;min-height:62px;border:0;background:#fff;font-size:18px;font-weight:800;color:#0c1230}
+.pp-zero-item:active{background:#eef5ff}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="card">
+<div style="text-align:center;padding:4px 0 12px;border-bottom:1px solid #eee;margin-bottom:14px">
+  <div style="font-size:34px;font-weight:900;letter-spacing:3px;line-height:1;color:#111">CLERIS</div>
+  <div style="font-size:9px;letter-spacing:2px;color:#777;margin-top:5px">DADA DIGITAL LAB</div>
+</div>
+<h1>Optical Lens Order</h1>
+<div class="sub">Fast Order Entry • Type 0.25 → automatically becomes +0.25</div>
+
+<div class="grid">
+<div class="full"><label>OP / RETAILER NAME *</label><input id="op" placeholder="e.g. HS RJT"></div>
+<div><label>PRODUCT *</label><input id="product" list="productList" placeholder="Select or type product" autocomplete="off">
+<datalist id="productList">
+<option value="KT"><option value="PROLITE"><option value="APEX"><option value="DIGILITE">
+<option value="DIGIPLUS"><option value="DIGIFLEX"><option value="OPTICARE"><option value="OPTIMAX +">
+<option value="OPTIMAX"><option value="CRYSTAL DUAL"><option value="SHARPVIEW">
+</datalist></div>
+<div><label>COATING *</label><select id="coating"><option value="">Select Coating</option><option>HARD COAT</option><option>HMC+</option><option>C BLUE</option><option>NIGHT DRIVE C BLUE</option><option>Other</option></select></div>
+<div><label>COATING INDEX</label><select id="index"><option value="">Select Index</option><option>1.50</option><option>1.56</option><option>1.59</option><option>1.60</option><option>1.67</option><option>1.74</option></select></div>
+<div><label>FITTING</label><select id="fitting"><option>YES</option><option>NO</option></select></div>
+<div><label>DIA</label><input id="dia" placeholder="70" inputmode="numeric"></div>
+<div><label>FH</label><select id="fh"><option>15</option><option>17</option><option>19</option><option>Other</option></select></div>
+<div><label>TINT TYPE</label><input id="tint" type="text" autocomplete="off" placeholder="Type tint type"></div>
+</div>
+
+<div id="samePowerWrap" style="margin:8px 0 12px">
+  <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid #ddd;border-radius:12px;background:#f7f8fb;cursor:pointer">
+    <input id="samePower" type="checkbox" style="width:20px;height:20px;accent-color:#111">
+    <span><b>BE Same Power</b><br>
+    <small style="color:#777">R ka SPH, CYL aur AXIS select karte hi L mein same power automatically aa jayega.</small></span>
+  </label>
+</div>
+
+<div class="section">
+<h2>RIGHT EYE (R)</h2>
+<div class="grid">
+<div><label>SPH</label><input id="rsph" class="power power-trigger" type="text" readonly autocomplete="off" placeholder="Select R SPH" data-power-label="R SPH" onclick="openPowerPicker('rsph')"></div>
+<div><label>CYL</label><input id="rcyl" class="power power-trigger" type="text" readonly autocomplete="off" placeholder="Select R CYL" data-power-label="R CYL" onclick="openPowerPicker('rcyl')"></div>
+<div><label>AXIS</label><input id="raxis" placeholder="90" inputmode="numeric"></div>
+
+</div>
+
+<div class="section">
+<h2>LEFT EYE (L)</h2>
+<div class="grid">
+<div><label>SPH</label><input id="lsph" class="power power-trigger" type="text" readonly autocomplete="off" placeholder="Select L SPH" data-power-label="L SPH" onclick="openPowerPicker('lsph')"></div>
+<div><label>CYL</label><input id="lcyl" class="power power-trigger" type="text" readonly autocomplete="off" placeholder="Select L CYL" data-power-label="L CYL" onclick="openPowerPicker('lcyl')"></div>
+<div><label>AXIS</label><input id="laxis" placeholder="80" inputmode="numeric"></div>
+
+</div>
+</div>
+
+<div style="font-size:11px;color:#777;margin-top:5px">Tap the power field to select (+/−) values from 0.00 to ±6.00 in 0.25 steps.</div>
+<div class="section">
+<label>ADD</label>
+
+<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
+  <select id="addMode" onchange="toggleAddMode()" style="width:100%;padding:12px;border:1px solid #ddd;border-radius:10px;font-size:15px;background:#fff">
+    <option value="same">Same ADD — R & L</option>
+    <option value="separate">Separate ADD — R / L</option>
+  </select>
+</div>
+
+<div id="sameAddBox">
+  <label style="font-size:11px;color:#666">ADD — Both Eyes</label>
+  <input id="radd" class="power" inputmode="decimal" autocomplete="off"
+         placeholder="e.g. +2.00" list="addList">
+</div>
+
+<div id="separateAddBox" style="display:none">
+  <div class="grid">
+    <div>
+      <label style="font-size:11px;color:#666">R ADD — Right Eye</label>
+      <input id="raddSep" class="power" inputmode="decimal" autocomplete="off"
+             placeholder="R ADD +2.00" list="addList">
+    </div>
+    <div>
+      <label style="font-size:11px;color:#666">L ADD — Left Eye</label>
+      <input id="ladd" class="power" inputmode="decimal" autocomplete="off"
+             placeholder="L ADD +2.00" list="addList">
+    </div>
+  </div>
+</div>
+
+<div style="font-size:11px;color:#777;margin-top:7px">
+  Separate ADD select karne par Right aur Left ADD alag-alag bhar sakte ho.
+</div>
+</div>
+
+<div class="section">
+<label>REMARKS</label><textarea id="remarks" placeholder="Urgent / special instruction / colour etc."></textarea>
+</div>
+
+<div class="btns">
+<button class="primary" onclick="generate()">GENERATE ORDER</button>
+<button class="light" onclick="resetForm()">CLEAR</button>
+</div>
+
+<datalist id="powerList"><option value="+0.25"><option value="+0.50"><option value="+0.75"><option value="+1.00"><option value="+1.25"><option value="+1.50"><option value="+1.75"><option value="+2.00"><option value="+2.25"><option value="+2.50"><option value="+2.75"><option value="+3.00"><option value="-0.25"><option value="-0.50"><option value="-0.75"><option value="-1.00"><option value="-1.25"><option value="-1.50"><option value="-1.75"><option value="-2.00"><option value="-2.25"><option value="-2.50"><option value="-2.75"><option value="-3.00"></datalist>
+<datalist id="cylList"><option value="0.00"><option value="-0.25"><option value="-0.50"><option value="-0.75"><option value="-1.00"><option value="-1.25"><option value="-1.50"><option value="-1.75"><option value="-2.00"><option value="-2.25"><option value="-2.50"><option value="-2.75"><option value="-3.00"><option value="+0.25"><option value="+0.50"><option value="+0.75"><option value="+1.00"></datalist>
+<datalist id="addList"><option value="+0.75"><option value="+1.00"><option value="+1.25"><option value="+1.50"><option value="+1.75"><option value="+2.00"><option value="+2.25"><option value="+2.50"><option value="+2.75"><option value="+3.00"></datalist>
+<div id="preview">
+<div class="previewTitle">Order Image Ready</div>
+<canvas id="canvas"></canvas>
+<div class="btns">
+<button class="green" onclick="downloadPNG()">DOWNLOAD IMAGE</button>
+<button class="green" onclick="shareOrder()">SHARE / WHATSAPP</button>
+</div>
+<div class="note">On Android, Share/WhatsApp will open the system share sheet. Select the Lab Customer Care WhatsApp contact.</div>
+</div>
+</div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const val=id=>$(id).value.trim();
+let lastBlob=null;
+
+function generate(){
+ if(!val('op')||!val('product')||!val('coating')){
+   alert('Please fill Retailer Name, Product and Coating.');
+   return;
+ }
+ const c=$('canvas'), W=1400,H=1200;
+ c.width=W;c.height=H;
+ const x=c.getContext('2d');
+
+ x.fillStyle='#fff'; x.fillRect(0,0,W,H);
+ x.strokeStyle='#222'; x.lineWidth=3;
+
+ const cols=[0,360,720,1060,1400];
+ const rows=[0,150,270,390,510,630,750,870,990,1200];
+ cols.forEach(v=>{x.beginPath();x.moveTo(v,0);x.lineTo(v,H);x.stroke()});
+ rows.forEach(v=>{x.beginPath();x.moveTo(0,v);x.lineTo(W,v);x.stroke()});
+
+ // Rounded outer border
+ x.save();
+ x.strokeStyle='#222'; x.lineWidth=4;
+ x.beginPath(); x.roundRect(2,2,W-4,H-4,28); x.stroke();
+ x.restore();
+
+ // Subtle blue heading cells
+ const labelBg='#EAF2FF', headingBg='#DCE9FF';
+ const fill=(x1,y1,w,h,color)=>{x.fillStyle=color;x.fillRect(x1+2,y1+2,w-4,h-4)};
+ fill(0,0,360,150,labelBg); fill(720,0,340,150,labelBg);
+ fill(0,150,360,120,labelBg); fill(720,150,340,120,labelBg);
+ fill(0,270,360,120,labelBg); fill(720,270,340,120,labelBg);
+ fill(0,510,360,120,'#F5F7FA'); fill(0,630,360,120,'#F5F7FA');
+ fill(0,750,360,120,labelBg); fill(0,870,360,150,labelBg);
+ fill(360,510,360,120,headingBg); fill(720,510,340,120,headingBg); fill(1060,510,340,120,headingBg);
+
+ x.fillStyle='#111'; x.textAlign='center'; x.textBaseline='middle';
+ const txt=(s,cx,cy,font='bold 40px Arial')=>{x.font=font;x.fillText(s,cx,cy)};
+
+ txt('OP NAME :',180,75); txt(val('op').toUpperCase(),540,75);
+ txt('FITTING :',890,75); txt(val('fitting'),1230,75);
+
+ txt('PRODUCT:',180,210); txt(val('product').toUpperCase(),540,210,'bold 34px Arial');
+ txt('DIA :',890,210); txt(val('dia')||'—',1230,210);
+
+ txt('COATING:',180,330); txt(val('coating').toUpperCase(),540,330);
+ txt('INDEX :',890,330); txt(val('index')||'—',1230,330);
+ txt('FH :',180,450); txt(val('fh')||'—',540,450); txt('TINT :',890,450); txt(val('tint')||'—',1230,450);
+
+ txt('',180,570); txt('SPH',540,570); txt('CYL',890,570); txt('AXIS',1230,570);
+
+ txt('R :',180,690); txt(val('rsph')||'—',540,690); txt(val('rcyl')||'—',890,690); txt(val('raxis')||'—',1230,690);
+ txt('L :',180,810); txt(val('lsph')||'—',540,810); txt(val('lcyl')||'—',890,810); txt(val('laxis')||'—',1230,810);
+
+ // ADD section: same or separate R/L
+const addModeVal=val('addMode')||'same';
+if(addModeVal==='separate'){
+  txt('ADD R :',180,930); txt(val('raddSep')||'—',540,930);
+  txt('ADD L :',890,930); txt(val('ladd')||'—',1230,930);
+}else{
+  txt('ADD :',180,930); txt(val('raddSep')||'—',540,930);
+}
+
+// Remarks in its own full-width row — clean and non-overlapping
+x.textAlign='left';
+txt('REMARKS :',55,1095,'bold 30px Arial');
+let remark=val('remarks')||'—';
+if(remark.length>55) remark=remark.slice(0,55)+'…';
+txt(remark.toUpperCase(),395,1095,'bold 28px Arial');
+
+ x.fillStyle='#777'; x.textAlign='right'; x.font='18px Arial';
+ x.fillText(new Date().toLocaleString('en-IN'),1365,1175);
+
+ $('preview').style.display='block';
+ c.toBlob(b=>lastBlob=b,'image/png');
+ $('preview').scrollIntoView({behavior:'smooth'});
+}
+
+function downloadPNG(){
+ if(!lastBlob){generate();return}
+ const a=document.createElement('a');a.href=URL.createObjectURL(lastBlob);a.download='Lens_Order_'+Date.now()+'.png';a.click();
+ setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+async function shareOrder(){
+ if(!lastBlob){generate();return}
+ const file=new File([lastBlob],'Lens_Order.png',{type:'image/png'});
+ if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+   try{await navigator.share({title:'Optical Lens Order',text:'Lens Order',files:[file]});}catch(e){}
+ }else{
+   downloadPNG();
+   alert('Image downloaded. WhatsApp Customer Care and attach this image.');
+ }
+}
+function resetForm(){location.reload()}
+
+function toggleAddMode(){
+  const mode=document.getElementById('addMode');
+  const same=document.getElementById('sameAddBox');
+  const separate=document.getElementById('separateAddBox');
+  if(!mode || !same || !separate) return;
+  if(mode.value==='separate'){
+    same.style.display='none';
+    separate.style.display='block';
+  }else{
+    same.style.display='block';
+    separate.style.display='none';
+    const r=document.getElementById('raddSep');
+    const l=document.getElementById('ladd');
+    if(r) r.value='';
+    if(l) l.value='';
+  }
+}
+</script>
+<script>
+function normalizePower(el){
+  let s=el.value.trim().replace(/\s/g,'');
+  if(!s || s==='+' || s==='-') return;
+  let n=Number(s);
+  if(!Number.isFinite(n)) return;
+  n=Math.round(n*4)/4;
+  el.value=(n>=0?'+':'-')+Math.abs(n).toFixed(2);
+}
+
+
+
+</script>
+<style>
+.power-picker-backdrop{position:fixed;inset:0;background:rgba(7,15,30,.55);z-index:99999;display:none;align-items:flex-end;justify-content:center}
+.power-picker{width:min(100%,540px);max-height:88vh;background:#fff;border-radius:24px 24px 0 0;overflow:hidden;box-shadow:0 -10px 40px rgba(0,0,0,.25)}
+.pp-head{padding:18px 20px 14px;display:flex;align-items:center;justify-content:space-between;font-size:19px;font-weight:800;color:#10152f}
+.pp-close{border:0;background:transparent;font-size:30px;line-height:1;color:#10152f;cursor:pointer}
+.pp-tabs{display:grid;grid-template-columns:1fr 1fr;background:#eef1fb}
+.pp-tab{border:0;padding:15px 8px;background:#eef1fb;color:#73788a;font-size:16px;font-weight:700}
+.pp-tab.active{color:#10152f;background:#e3e8f8}
+.pp-list{display:grid;grid-template-columns:1fr 1fr;max-height:66vh;overflow:auto}
+.pp-item{border:0;border-bottom:1px solid #e9e9ed;border-right:1px solid #e9e9ed;background:#fff;padding:16px 8px;font-size:18px;font-weight:700;color:#10152f;cursor:pointer}
+.pp-item:active{background:#f0f5ff}
+.power-trigger{cursor:pointer!important;background:#fff!important}
+.power-trigger:focus{outline:none;border-color:#111;box-shadow:0 0 0 3px rgba(20,30,50,.10)}
+</style>
+
+<div id="powerPickerBackdrop" class="power-picker-backdrop" onclick="if(event.target===this) closePowerPicker()">
+  <div class="power-picker">
+    <div class="pp-head">
+      <span id="ppTitle">Spherical | Right Eye</span>
+      <button class="pp-close" type="button" onclick="closePowerPicker()">×</button>
+    </div>
+    <div class="pp-tabs">
+      <button class="pp-tab active" type="button"> (+) Positive</button>
+      <button class="pp-tab active" type="button"> (−) Negative</button>
+    </div>
+    <div id="ppZeroRow" class="pp-zero-row">
+      <button type="button" class="pp-zero-item" onclick="selectPowerZero()">0.00</button>
+    </div>
+    <div class="pp-grid">
+      <div class="pp-col" id="ppPositiveList"></div>
+      <div class="pp-col" id="ppNegativeList"></div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  let activeField=null;
+
+  function buildValues(sign){
+    const a=[];
+    if(sign==='+') a.push('0.00');
+    for(let i=1;i<=24;i++) a.push(sign+(i*0.25).toFixed(2));
+    return a;
+  }
+
+  window.openPowerPicker=function(id){
+    activeField=document.getElementById(id);
+    if(!activeField) return;
+    const label=activeField.dataset.powerLabel || 'Power';
+    document.getElementById('ppTitle').textContent='Spherical | '+label;
+    render();
+    document.getElementById('powerPickerBackdrop').style.display='flex';
+    document.body.style.overflow='hidden';
+  };
+
+  function render(){
+    const pos=document.getElementById('ppPositiveList');
+    const neg=document.getElementById('ppNegativeList');
+    pos.innerHTML='<span class="pp-positive-title">Positive</span>';
+    neg.innerHTML='<span class="pp-negative-title">Negative</span>';
+
+    // Both columns use the EXACT same scale and stay aligned:
+    // +0.25 / -0.25, +0.50 / -0.50 ... +6.00 / -6.00.
+    for(let i=1;i<=24;i++){
+      const n=(i*0.25).toFixed(2);
+
+      const bp=document.createElement('button');
+      bp.type='button'; bp.className='pp-item'; bp.textContent='+'+n;
+      bp.onclick=()=>select('+'+n);
+      pos.appendChild(bp);
+
+      const bn=document.createElement('button');
+      bn.type='button'; bn.className='pp-item'; bn.textContent='-'+n;
+      bn.onclick=()=>select('-'+n);
+      neg.appendChild(bn);
+    }
+  }
+
+  function selectPowerZero(){
+    select('0.00');
+  }
+
+  function select(v){
+    if(activeField){
+      activeField.value=v;
+      activeField.dispatchEvent(new Event('input',{bubbles:true}));
+      activeField.dispatchEvent(new Event('change',{bubbles:true}));
+    }
+    closePowerPicker();
+  }
+
+  window.closePowerPicker=function(){
+    const m=document.getElementById('powerPickerBackdrop');
+    if(m) m.style.display='none';
+    document.body.style.overflow='';
+    activeField=null;
+  };
+})();
+</script>
+
+
+<script>
+(function(){
+  function syncSamePower(){
+    const same=document.getElementById('samePower');
+    if(!same || !same.checked) return;
+    [['rsph','lsph'],['rcyl','lcyl'],['raxis','laxis']].forEach(([r,l])=>{
+      const rf=document.getElementById(r), lf=document.getElementById(l);
+      if(rf && lf){
+        lf.value=rf.value;
+        lf.dispatchEvent(new Event('input',{bubbles:true}));
+        lf.dispatchEvent(new Event('change',{bubbles:true}));
+      }
+    });
+  }
+  window.addEventListener('load',function(){
+    const same=document.getElementById('samePower');
+    if(!same) return;
+    same.addEventListener('change',syncSamePower);
+    ['rsph','rcyl','raxis'].forEach(id=>{
+      const f=document.getElementById(id);
+      if(f){
+        f.addEventListener('input',syncSamePower);
+        f.addEventListener('change',syncSamePower);
+      }
+    });
+  });
+})();
+</script>
+
+</body>
+</html>
