@@ -794,14 +794,59 @@ renderHistory=function(){
 
 /* Real Excel-compatible SpreadsheetML, instead of HTML pretending to be .xls. */
 downloadHistoryExcel=function(){
-  const a=loadMyHistory();if(!a.length){alert('No orders available in your history.');return;}
-  const headers=['Order ID','User','Date/Time','Wholesaler','Customer','Product','Coating','Index','Fitting','DIA','IPD','FH','Tint','R SPH','R CYL','R AXIS','L SPH','L CYL','L AXIS','ADD R','ADD L','Remarks'];
-  const esc=v=>String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');
-  const row=r=>'<Row>'+r.map(v=>'<Cell><Data ss:Type="String">'+esc(v)+'</Data></Cell>').join('')+'</Row>';
-  const data=a.map(o=>[o.id,o.user,o.date,o.wholesaler,o.customer,o.product,o.coating,o.index,o.fitting,o.dia,o.ipd,o.fh,o.tint,o.r?.sph,o.r?.cyl,o.r?.axis,o.l?.sph,o.l?.cyl,o.l?.axis,o.addR,o.addL,o.remarks]);
-  const xml='<?xml version="1.0" encoding="UTF-8"?><?mso-application progid="Excel.Sheet"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Styles><Style ss:ID="Header"><Font ss:Bold="1"/></Style></Styles><Worksheet ss:Name="Order History"><Table><Row>'+headers.map(h=>'<Cell ss:StyleID="Header"><Data ss:Type="String">'+esc(h)+'</Data></Cell>').join('')+'</Row>'+data.map(row).join('')+'</Table></Worksheet></Workbook>';
-  const blob=new Blob([xml],{type:'application/vnd.ms-excel'}),url=URL.createObjectURL(blob),link=document.createElement('a');
-  link.href=url;link.download='CLERIS_'+getLoggedUser()+'_Order_History_'+new Date().toISOString().slice(0,10)+'.xls';document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);
+  const orders = loadMyHistory();
+
+  if(!orders.length){
+    alert('No orders available in your history.');
+    return;
+  }
+
+  const headers = [
+    'Order ID','User','Date/Time','Wholesaler','Customer',
+    'Product','Coating','Index','Fitting','DIA','IPD','FH',
+    'Tint','R SPH','R CYL','R AXIS',
+    'L SPH','L CYL','L AXIS','ADD R','ADD L','Remarks'
+  ];
+
+  const escapeCsv = value => {
+    const text = String(value ?? '');
+    return '"' + text.replace(/"/g, '""') + '"';
+  };
+
+  const rows = orders.map(o => [
+    o.id,o.user,o.date,o.wholesaler,o.customer,
+    o.product,o.coating,o.index,o.fitting,o.dia,
+    o.ipd,o.fh,o.tint,
+    o.r?.sph,o.r?.cyl,o.r?.axis,
+    o.l?.sph,o.l?.cyl,o.l?.axis,
+    o.addR,o.addL,o.remarks
+  ]);
+
+  const csv = [headers,...rows]
+    .map(row => row.map(escapeCsv).join(','))
+    .join('\r\n');
+
+  const blob = new Blob(
+    ['\ufeff' + csv],
+    {type:'text/csv;charset=utf-8;'}
+  );
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+
+  link.href = url;
+  link.download =
+    'CLERIS_' +
+    getLoggedUser() +
+    '_Order_History_' +
+    new Date().toISOString().slice(0,10) +
+    '.csv';
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  setTimeout(() => URL.revokeObjectURL(url),1000);
 };
 </script>
 </body>
